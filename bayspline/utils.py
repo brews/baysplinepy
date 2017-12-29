@@ -6,31 +6,32 @@ def augknt(knots, degree):
 
     Python version of MATLAB's augknt().
     """
-    # a = []
-    # Below is poorly done.
     heads = [knots[0]] * degree
     tails = [knots[-1]] * degree
     return np.concatenate([heads, knots, tails])
 
 
 def chainconvergence(chains, m):
+    """ calculate the R-hat stat
     """
-    From Jess Tierney's "ChainConvergence.m"
-    %
-    % function [Rhat, Neff]=ChainConvergence(chains, M)
-    %
-    % calculate the R-hat stat form "Bayesian Data Analysis" (page 297) for
-    % monitoring  convergence of multiple parallel MCMC runs. Also outputs
-    % n_eff from page 298.
-    % chains: a matrix of MCMC chains, each of the same length.
-    % M: the number of different chains - must be one of the dimensions of
-    % chains.
-    %
-    %test
-    %chains=randn(100,50);
-    %chains(:,1)=chains(:,1)+10;
-    %M=5;
-    """
+    # TODO(brews): Finish function docstring
+    # TODO(brews): Finish function test
+
+    # From Jess Tierney's "ChainConvergence.m"
+    # %
+    # % function [Rhat, Neff]=ChainConvergence(chains, M)
+    # %
+    # % calculate the R-hat stat form "Bayesian Data Analysis" (page 297) for
+    # % monitoring  convergence of multiple parallel MCMC runs. Also outputs
+    # % n_eff from page 298.
+    # % chains: a matrix of MCMC chains, each of the same length.
+    # % M: the number of different chains - must be one of the dimensions of
+    # % chains.
+    # %
+    # %test
+    # %chains=randn(100,50);
+    # %chains(:,1)=chains(:,1)+10;
+    # %M=5;
     chains = np.array(chains)
     m = int(m)
     assert m in chains.shape
