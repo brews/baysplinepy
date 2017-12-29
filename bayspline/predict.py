@@ -89,56 +89,56 @@ def predict_sst(age, uk, pstd):
     output['age'] = np.array(age)
     uk = np.array(uk)
 
-    n_ts = len(uk)
-    n_p = len(tau2_draws_final)
+    n_uk = len(uk)
+    n_posterior = len(tau2_draws_final)
 
     # Nsamps
-    n = 500
+    n_iter = 500
     burnin = 250
 
     # Set priors. Use prahl conversion to target mean and std
-    pm = np.median((uk - 0.039) / 0.034)
+    prior_mean = np.median((uk - 0.039) / 0.034)
 
     # Save priors to output
-    output['prior_mean'] = pm
+    output['prior_mean'] = prior_mean
     output['prior_std'] = pstd
 
     # Vectorize priors
-    prior_mean = output['prior_mean'] * np.ones(n_ts)
-    prior_var = output['prior_std'] ** 2 * np.ones(n_ts)
+    prior_mean = output['prior_mean'] * np.ones(n_uk)
+    prior_var = output['prior_std'] ** 2 * np.ones(n_uk)
 
     # Set an initial SST value
-    init = pm
+    initial_sst = prior_mean
 
-    mh_samps_t = np.empty((n_ts, n_p, n - burnin))
-    mh_samps_t[:] = np.nan
-    accepts_t = np.empty((n_ts, n_p, n - burnin))
+    mh_samples = np.empty((n_uk, n_posterior, n_iter - burnin))
+    mh_samples[:] = np.nan
+    accepts_t = np.empty((n_uk, n_posterior, n_iter - burnin))
     accepts_t[:] = np.nan
 
     # Make a spline with set knots
     degree = 2  # order is 3
     kn = augknt(knots, degree)
 
-    if pm < 20:
-        jw = 3.5
-    elif 20 <= pm <= 23.7:
-        jw = 3.7
+    if output['prior_mean'] < 20:
+        jump_dist = 3.5
+    elif 20 <= output['prior_mean'] <= 23.7:
+        jump_dist = 3.7
     else:
-        jw = pm * 0.8092 - 15.1405
+        jump_dist = output['prior_mean'] * 0.8092 - 15.1405
 
-    output['jump_dist'] = jw  # Should be 3.5 in test case.
+    output['jump_dist'] = jump_dist  # Should be 3.5 in test case.
 
     # MH loop
-    for jj in range(n_p):
+    for jj in range(n_posterior):
 
-        accepts = np.empty((n_ts, n))
+        accepts = np.empty((n_uk, n_iter))
         accepts[:] = np.nan
-        samps = np.empty((n_ts, n))
-        samps[:] = np.nan
+        samples = np.empty((n_uk, n_iter))
+        samples[:] = np.nan
 
         # Initialize at starting value
-        samps[:, 0] = init
-        s_now = samps[:, 0]
+        samples[:, 0] = initial_sst
+        sample_now = samples[:, 0]
 
         b_now = b_draws_final[jj, :]
         tau_now = tau2_draws_final[jj]
@@ -146,54 +146,56 @@ def predict_sst(age, uk, pstd):
         tck = [kn, b_now, degree]
 
         # evaluate mean UK value at current SST
-        mean_now = interpolate.splev(x=s_now, tck=tck, ext=0)
-        # mean_now should be [0.5125, 0.5125, 0.5125] in test case
-        # Evaluate liklihood
-        ll_now = stats.norm.pdf(uk, mean_now, np.sqrt(tau_now))
-        # ll_now should be [0.5877, 7.8648, 1.6623]
+        mean_now = interpolate.splev(x=sample_now, tck=tck, ext=0)
+
+        # Evaluate likelihood
+        likelihood_now = stats.norm.pdf(uk, mean_now, np.sqrt(tau_now))
+
         # Evaluate prior
-        pr_now = stats.norm.pdf(s_now, prior_mean, np.sqrt(prior_var))
+        prior_now = stats.norm.pdf(sample_now, prior_mean, np.sqrt(prior_var))
 
         # multiply to get initial proposal S0
-        s0_now = ll_now * pr_now  # should be [1.1723; 15.6880; 3.3158]
+        initial_proposal = likelihood_now * prior_now
 
-        for kk in range(1, n):
+        for kk in range(1, n_iter):
             # generate proposal using normal jumping distr.
-            s_prop = np.random.normal(s_now, jw)
+            proposal = np.random.normal(sample_now, jump_dist)
             # evaluate mean value at current sst
-            mean_now = interpolate.splev(x=s_prop, tck=tck, ext=0)
+            mean_now = interpolate.splev(x=proposal, tck=tck, ext=0)
             # evaluate liklihood
-            ll_now = stats.norm.pdf(uk, mean_now, np.sqrt(tau_now))
+            likelihood_now = stats.norm.pdf(uk, mean_now, np.sqrt(tau_now))
             # evaluate prior
-            pr_now = stats.norm.pdf(s_prop, prior_mean, np.sqrt(prior_var))
-            # multiply to get proposal s0_p
-            s0_p = ll_now * pr_now
+            prior_now = stats.norm.pdf(proposal, prior_mean, np.sqrt(prior_var))
+            # multiply to get proposal update_proposal
+            update_proposal = likelihood_now * prior_now
 
-            mh_rat = s0_p / s0_now
-            success_rate = np.min([1, mh_rat.min()])
+            mh_rate = update_proposal / initial_proposal
+            success_rate = np.min([1, mh_rate.min()])
 
             # make the draw
-            draw = np.random.uniform(size=n_ts)
+            draw = np.random.uniform(size=n_uk)
             b = draw <= success_rate
-            s_now[b] = s_prop[b]
-            s0_now[b] = s0_p[b]
+            sample_now[b] = proposal[b]
+            initial_proposal[b] = update_proposal[b]
 
             accepts[b, kk] = 1
-            samps[:, kk] = s_now
+            samples[:, kk] = sample_now
             
-        mh_samps_t[:, jj, :] = samps[:, burnin:]
+        mh_samples[:, jj, :] = samples[:, burnin:]
         accepts_t[:, jj, :] = accepts[:, burnin:]
 
     # Now let's calculate the rhat statistic to assess convergence
-    rhats = np.empty((mh_samps_t.shape[0], 1))
-    for i in range(mh_samps_t.shape[0]):
-        rhats[i], neff = chainconvergence(mh_samps_t[i, ...].squeeze(), n_p)
-
+    # TODO(brews): See if we can't clean up the below and just use chaincovergence()
+    rhats = np.empty((mh_samples.shape[0], 1))
+    for i in range(mh_samples.shape[0]):
+        rhats[i], neff = chainconvergence(mh_samples[i, ...].squeeze(), n_posterior)
     output['rhat'] = np.median(rhats, axis=0)
+
     # reshape
-    mh_c = mh_samps_t.reshape([n_ts, n_p * (n-burnin)], order='F')
+    mh_c = mh_samples.reshape([n_uk, n_posterior * (n_iter-burnin)], order='F')
+
     # Calculate acceptance
-    output['accepts'] = np.nansum(accepts_t) / (n_ts * n_p * (n - burnin))  # TODO: needs testing.
+    output['accepts'] = np.nansum(accepts_t) / (n_uk * n_posterior * (n_iter - burnin))
 
     # Sort and assign to output
     mh_s = mh_c.copy()
@@ -202,6 +204,6 @@ def predict_sst(age, uk, pstd):
     output['sst'] = mh_s[:, pers5]
 
     # take a subsample of MH to work with for ks.   
-    mh_sub = mh_s[:, 1::50]
-    output['ens'] = mh_sub
+    mh_subsample = mh_s[:, 1::50]
+    output['ens'] = mh_subsample
     return output
