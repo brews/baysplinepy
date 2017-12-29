@@ -29,27 +29,15 @@ def predict_uk(age, sst):
     tau2_draws_final = draws['tau2_draws_final']
     knots = draws['knots'].ravel()
 
-    # Read in same `xnew` seeded in MATLAB example.
     output['age'] = np.array(age)
     xnew = np.array(sst)
-    # xnew = 30 * np.random.rand(100, 1)
 
     order = 2  # 3 in MATLAB
-    # Not needed in vectorized version.
-    ynew = np.empty((xnew.size, len(tau2_draws_final)))
 
-    # # Without for-loops. Should be faster.
-    # tck = [augknt(knots, order), b_draws_final, order]
-    # mean_now = interpolate.splev(x=xnew, tck=tck, ext=0)
-    # ynew = np.random.normal(mean_now, np.sqrt(tau2_draws_final))
-    # ynew = ynew.T
-
-    # With for-loops. Like what is in MATLAB example.
-    for i, tau_now in enumerate(tau2_draws_final):
-        beta_now = b_draws_final[i]
-        tck = [augknt(knots, order), beta_now, order]
-        mean_now = interpolate.splev(x=xnew, tck=tck, ext=0)
-        ynew[:, i] = np.random.normal(mean_now, np.sqrt(tau_now))
+    tck = [augknt(knots, order), b_draws_final, order]
+    mean_now = interpolate.splev(x=xnew, tck=tck, ext=0)
+    ynew = np.random.normal(mean_now, np.sqrt(tau2_draws_final))
+    ynew = ynew.T
 
     output['uk'] = ynew
     return output
