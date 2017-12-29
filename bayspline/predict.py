@@ -32,9 +32,9 @@ def predict_uk(age, sst):
     output['age'] = np.array(age)
     xnew = np.array(sst)
 
-    order = 2  # 3 in MATLAB
+    degree = 2
 
-    tck = [augknt(knots, order), b_draws_final, order]
+    tck = [augknt(knots, degree), b_draws_final, degree]
     mean_now = interpolate.splev(x=xnew, tck=tck, ext=0)
     ynew = np.random.normal(mean_now, np.sqrt(tau2_draws_final))
     ynew = ynew.T
