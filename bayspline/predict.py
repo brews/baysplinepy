@@ -7,63 +7,90 @@ from bayspline.utils import chainconvergence, augknt
 
 
 def predict_uk(age, sst):
-    """Predict a UK37 value given SST"""
+    """Predict a UK'37 value given SST
 
+    Parameters
+    ----------
+    age : 1d array_like
+        Indicates the age of each element in `uk`. Array length is N.
+    sst : 1d array_like
+        SST values. Array length is N.
+
+    Returns
+    -------
+    output : dict
+
+        uk : ndarry
+            1500 x N array of inferred ensemble UK'37 values
+    """
     output = dict()
 
     b_draws_final = draws['b_draws_final']
     tau2_draws_final = draws['tau2_draws_final']
     knots = draws['knots'].ravel()
 
-
-    # Read in same `Xnew` seeded in MATLAB example.
+    # Read in same `xnew` seeded in MATLAB example.
     output['age'] = np.array(age)
-    Xnew = np.array(sst)
-    # Xnew = 30 * np.random.rand(100, 1)
+    xnew = np.array(sst)
+    # xnew = 30 * np.random.rand(100, 1)
 
     order = 2  # 3 in MATLAB
-    ## Not needed in vectorized version.
-    Ynew = np.empty((Xnew.size, len(tau2_draws_final)))
+    # Not needed in vectorized version.
+    ynew = np.empty((xnew.size, len(tau2_draws_final)))
 
     # # Without for-loops. Should be faster.
     # tck = [augknt(knots, order), b_draws_final, order]
-    # mean_now = interpolate.splev(x=Xnew, tck=tck, ext=0)
-    # Ynew = np.random.normal(mean_now, np.sqrt(tau2_draws_final))
-    # Ynew = Ynew.T
+    # mean_now = interpolate.splev(x=xnew, tck=tck, ext=0)
+    # ynew = np.random.normal(mean_now, np.sqrt(tau2_draws_final))
+    # ynew = ynew.T
 
-    ## With for-loops. Like what is in MATLAB example.
+    # With for-loops. Like what is in MATLAB example.
     for i, tau_now in enumerate(tau2_draws_final):
         beta_now = b_draws_final[i]
         tck = [augknt(knots, order), beta_now, order]
-        mean_now = interpolate.splev(x = Xnew, tck = tck, ext = 0)
-        Ynew[:, i] = np.random.normal(mean_now, np.sqrt(tau_now))
+        mean_now = interpolate.splev(x=xnew, tck=tck, ext=0)
+        ynew[:, i] = np.random.normal(mean_now, np.sqrt(tau_now))
 
-    output['uk'] = Ynew
+    output['uk'] = ynew
     return output
 
 
 def predict_sst(age, uk, pstd):
-    """Predict SST value given UK37
-    %
-    %INPUTS:
-    %uk = uk37' values of length N
-    %pstd = prior standard deviation. Recommended values are 7.5-10 for most uk
-    %timeseries. Lower values OK for timeseries with smaller range.
+    """Predict SST value given UK'37
 
-    %OUTPUTS:
-    %output.prior_mean = Prior mean value, taken from the mean of the UK timeseries
-    %converted to SST with the Prahl equation.
-    %
-    %output.prior_std = Prior standard deviation (user set).
-    %
-    %output.jump_dist = standard deviation of the jumping distribution.
-    %Values are chosen to achieve a acceptance rate of ca. 0.44
-    %(Gelman, 2003).
-    %
-    %output.SST = 5 x N vector of inferred SSTs, includes 5% level (lower 2sigma), 16% level
-    %(lower 1sigma), 50% level (median values), 84% level (upper 1sigma), and
-    %95% level (upper 2 sigma).
+    Parameters
+    ----------
+    age : 1d array_like
+        Indicates the age of each element in `uk`. Array length is N.
+    uk : 1d array_like
+        UK'37 values. Array length is N.
+    pstd : float
+        Prior standard deviation. Recommended values are 7.5 - 10 for most
+        UK'37 data. Lower values are usually fine for UK'37 data with a
+        smaller range.
+
+    Returns
+    -------
+    output : dict
+        prior_mean : float
+            Prior mean value, taken from the mean of the UK'37 data converted
+            to SST with the Prahl equation.
+        prior_std : float
+            Prior standard deviation (set by user).
+        jump_dist : float
+            Standard deviation of the jump distribution. Values are chosen
+            to achieve an acceptance rate of ca. 0.44 [1]_.
+        sst : ndarry
+            5 x N array of inferred SSTs, includes 5% level (lower 2sigma),
+            16% level (lower 1sigma), 50% level (median values),
+            84% level (upper 1sigma), and 95% level (upper 2 sigma).
+
+    References
+    ----------
+    .. [1] Gelman, Andrew, ed. Bayesian Data Analysis. 2nd ed. Texts in
+        Statistical Science. Boca Raton, Fla: Chapman & Hall/CRC, 2004.
     """
+
     # TODO: Add limit to uk range -- I can make strange numbers with large uk vals (e.g. 28)
     output = dict()
     # draws = loadmat('bayes_posterior.mat')
@@ -77,7 +104,7 @@ def predict_sst(age, uk, pstd):
     n_ts = len(uk)
     n_p = len(tau2_draws_final)
 
-    #Nsamps
+    # Nsamps
     n = 500
     burnin = 250
 
@@ -89,8 +116,8 @@ def predict_sst(age, uk, pstd):
     output['prior_std'] = pstd
 
     # Vectorize priors
-    prior_mean = output['prior_mean'] * np.ones((n_ts))
-    prior_var = output['prior_std'] ** 2 * np.ones((n_ts))
+    prior_mean = output['prior_mean'] * np.ones(n_ts)
+    prior_var = output['prior_std'] ** 2 * np.ones(n_ts)
 
     # Set an initial SST value
     init = pm
@@ -101,12 +128,12 @@ def predict_sst(age, uk, pstd):
     accepts_t[:] = np.nan
 
     # Make a spline with set knots
-    degree = 2 # order is 3
+    degree = 2  # order is 3
     kn = augknt(knots, degree)
 
     if pm < 20:
         jw = 3.5
-    elif pm >= 20 and pm <=23.7:
+    elif 20 <= pm <= 23.7:
         jw = 3.7
     else:
         jw = pm * 0.8092 - 15.1405
@@ -145,9 +172,9 @@ def predict_sst(age, uk, pstd):
         for kk in range(1, n):
             # generate proposal using normal jumping distr.
             s_prop = np.random.normal(s_now, jw)
-            #evaluate mean value at current sst
+            # evaluate mean value at current sst
             mean_now = interpolate.splev(x=s_prop, tck=tck, ext=0)
-            #evaluate liklihood
+            # evaluate liklihood
             ll_now = stats.norm.pdf(uk, mean_now, np.sqrt(tau_now))
             # evaluate prior
             pr_now = stats.norm.pdf(s_prop, prior_mean, np.sqrt(prior_var))
