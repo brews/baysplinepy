@@ -6,12 +6,6 @@ from bayspline.posterior import draws
 from bayspline.mcmc_utils import chainconvergence
 
 
-# Variables for test case
-uk = np.array([0.4, 0.5, 0.6])
-age = np.array([1, 2, 3])
-pstd = 7.5
-
-
 def augknt(knots, degree):
     """Augment knots to meet boundary conditiions
 
@@ -24,9 +18,40 @@ def augknt(knots, degree):
     return np.concatenate([heads, knots, tails])
 
 
-def predict_uk(age, sst, pstd):
+def predict_uk(age, sst):
     """Predict a UK37 value given SST"""
-    raise NotImplementedError
+
+    output = dict()
+
+    b_draws_final = draws['b_draws_final']
+    tau2_draws_final = draws['tau2_draws_final']
+    knots = draws['knots'].ravel()
+
+
+    # Read in same `Xnew` seeded in MATLAB example.
+    output['age'] = np.array(age)
+    Xnew = np.array(sst)
+    # Xnew = 30 * np.random.rand(100, 1)
+
+    order = 2  # 3 in MATLAB
+    ## Not needed in vectorized version.
+    Ynew = np.empty((Xnew.size, len(tau2_draws_final)))
+
+    # # Without for-loops. Should be faster.
+    # tck = [augknt(knots, order), b_draws_final, order]
+    # mean_now = interpolate.splev(x=Xnew, tck=tck, ext=0)
+    # Ynew = np.random.normal(mean_now, np.sqrt(tau2_draws_final))
+    # Ynew = Ynew.T
+
+    ## With for-loops. Like what is in MATLAB example.
+    for i, tau_now in enumerate(tau2_draws_final):
+        beta_now = b_draws_final[i]
+        tck = [augknt(knots, order), beta_now, order]
+        mean_now = interpolate.splev(x = Xnew, tck = tck, ext = 0)
+        Ynew[:, i] = np.random.normal(mean_now, np.sqrt(tau_now))
+
+    output['uk'] = Ynew
+    return output
 
 
 def predict_sst(age, uk, pstd):
