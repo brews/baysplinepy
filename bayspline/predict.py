@@ -1,11 +1,10 @@
-#! /usr/bin/env python
-
 import numpy as np
 import scipy.stats as stats
 import scipy.interpolate as interpolate
 
 from bayspline.posterior import draws
 from bayspline.mcmc_utils import chainconvergence
+
 
 # Variables for test case
 uk = np.array([0.4, 0.5, 0.6])
@@ -25,8 +24,13 @@ def augknt(knots, degree):
     return np.concatenate([heads, knots, tails])
 
 
-def predict_uk(age, uk, pstd):
-    """Blah blah blah
+def predict_uk(age, sst, pstd):
+    """Predict a UK37 value given SST"""
+    raise NotImplementedError
+
+
+def predict_sst(age, uk, pstd):
+    """Predict SST value given UK37
     %
     %INPUTS:
     %uk = uk37' values of length N

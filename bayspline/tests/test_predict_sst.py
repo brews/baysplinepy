@@ -3,8 +3,9 @@ import numpy as np
 import bayspline
 
 
-def test_predict_uk():
+def test_predict_sst():
     np.random.seed(123)
+
     uk = np.array([0.4, 0.5, 0.6])
     age = np.array([1, 2, 3])
     pstd = 7.5
@@ -19,7 +20,7 @@ def test_predict_uk():
                          [10.8206, 11.7538, 13.1597, 14.5701, 15.5144],
                          [13.7086, 14.6448, 16.0522, 17.4940, 18.3874]])
 
-    victim = bayspline.predict_uk(age, uk, pstd)
+    victim = bayspline.predict_sst(age, uk, pstd)
 
     np.testing.assert_allclose(goal_prior_mean, victim['prior_mean'], atol=1e-4)
     assert goal_prior_std == victim['prior_std']
