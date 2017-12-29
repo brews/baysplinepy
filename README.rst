@@ -1,1 +1,1 @@
-A Python implimentation of BAYSPLINE.
+A Python implementation of BAYSPLINE.
