@@ -1,6 +1,18 @@
 import numpy as np
 
 
+def augknt(knots, degree):
+    """Augment knots to meet boundary conditiions
+
+    Python version of MATLAB's augknt().
+    """
+    # a = []
+    # Below is poorly done.
+    heads = [knots[0]] * degree
+    tails = [knots[-1]] * degree
+    return np.concatenate([heads, knots, tails])
+
+
 def chainconvergence(chains, m):
     """
     From Jess Tierney's "ChainConvergence.m"

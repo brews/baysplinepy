@@ -3,19 +3,7 @@ import scipy.stats as stats
 import scipy.interpolate as interpolate
 
 from bayspline.posterior import draws
-from bayspline.mcmc_utils import chainconvergence
-
-
-def augknt(knots, degree):
-    """Augment knots to meet boundary conditiions
-
-    Python version of MATLAB's augknt().
-    """
-    # a = []
-    # Below is poorly done.
-    heads = [knots[0]] * degree
-    tails = [knots[-1]] * degree
-    return np.concatenate([heads, knots, tails])
+from bayspline.utils import chainconvergence, augknt
 
 
 def predict_uk(age, sst):
