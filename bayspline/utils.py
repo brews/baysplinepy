@@ -1,3 +1,6 @@
+import os
+import pkgutil
+import io
 import numpy as np
 
 
@@ -51,3 +54,19 @@ def chainconvergence(chains, m):
     rhat = np.sqrt(var_hat_pos/w)
     neff = m * n * np.min([var_hat_pos / b, 1])
     return rhat, neff
+
+
+def get_example_data(filename):
+    """Get a BytesIO object for a bayspar example file.
+
+    Parameters
+    ----------
+    filename : str
+        File to load.
+
+    Returns
+    -------
+    BytesIO of the example file.
+    """
+    resource_str = os.path.join('example_data', filename)
+    return io.BytesIO(pkgutil.get_data('bayspline', resource_str))

@@ -170,7 +170,7 @@ def predict_sst(age, uk, pstd):
             update_proposal = likelihood_now * prior_now
 
             mh_rate = update_proposal / initial_proposal
-            success_rate = np.min([1, mh_rate.min()])
+            success_rate = np.minimum(1, mh_rate)
 
             # make the draw
             draw = np.random.uniform(size=n_uk)
