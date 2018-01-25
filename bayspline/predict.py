@@ -34,11 +34,17 @@ def predict_uk(age, sst):
     xnew = np.array(sst)
 
     degree = 2
+    aknt = augknt(knots, degree)
 
-    tck = [augknt(knots, degree), b_draws_final, degree]
-    mean_now = interpolate.splev(x=xnew, tck=tck, ext=0)
-    ynew = np.random.normal(mean_now, np.sqrt(tau2_draws_final))
-    ynew = ynew.T
+    ynew = np.empty((len(xnew), len(b_draws_final)))
+    for i, b_now in enumerate(b_draws_final):
+        tau2_now = tau2_draws_final[i]
+
+        tck = [aknt, b_now, degree]
+        bs = extrapolate_spline(tck)
+        mean_now = bs(xnew)
+
+        ynew[:, i] = np.random.normal(mean_now, np.sqrt(tau2_now))
 
     output['uk'] = ynew
     return output
