@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-import bayspline
+import bayspline as bsl
 
 
 def test_predict_sst():
@@ -20,7 +20,7 @@ def test_predict_sst():
                          [10.8206, 11.7538, 13.1597, 14.5701, 15.5144],
                          [13.7086, 14.6448, 16.0522, 17.4940, 18.3874]])
 
-    victim = bayspline.predict_sst(age, uk, pstd)
+    victim = bsl.predict_sst(age, uk, pstd)
 
     np.testing.assert_allclose(goal_prior_mean, victim['prior_mean'], atol=1e-4)
     assert goal_prior_std == victim['prior_std']
@@ -29,3 +29,14 @@ def test_predict_sst():
     np.testing.assert_allclose(goal_accepts, victim['accepts'], atol=0.5)
     np.testing.assert_allclose(goal_sst, victim['sst'], atol=1)
 
+
+@pytest.mark.skip(reason='Need a goal for test')
+def test_predict_sst_real():
+    """Test against real data we have as an example
+    """
+    np.random.seed(123)
+
+    d = np.genfromtxt(bsl.get_example_data('stienke2008-md01-2390.csv'),
+                      delimiter=',', names=True)
+
+    prediction = bsl.predict_sst(age=d['age'], uk=d['uk'], pstd=10)
