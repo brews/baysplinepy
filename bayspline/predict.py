@@ -3,7 +3,7 @@ import scipy.stats as stats
 import scipy.interpolate as interpolate
 
 from bayspline.posterior import draws
-from bayspline.utils import chainconvergence, augknt
+from bayspline.utils import chainconvergence, augknt, extrapolate_spline
 
 
 def predict_uk(age, sst):
@@ -138,15 +138,16 @@ def predict_sst(age, uk, pstd):
 
         # Initialize at starting value
         samples[:, 0] = initial_sst
-        sample_now = samples[:, 0]
+        sample_now = initial_sst
 
         b_now = b_draws_final[jj, :]
         tau_now = tau2_draws_final[jj]
         # use spmak to put together the bspline
         tck = [kn, b_now, degree]
+        bs = extrapolate_spline(tck)
 
         # evaluate mean UK value at current SST
-        mean_now = interpolate.splev(x=sample_now, tck=tck, ext=0)
+        mean_now = bs(sample_now)
 
         # Evaluate likelihood
         likelihood_now = stats.norm.pdf(uk, mean_now, np.sqrt(tau_now))
@@ -161,7 +162,7 @@ def predict_sst(age, uk, pstd):
             # generate proposal using normal jumping distr.
             proposal = np.random.normal(sample_now, jump_dist)
             # evaluate mean value at current sst
-            mean_now = interpolate.splev(x=proposal, tck=tck, ext=0)
+            mean_now = bs(proposal)
             # evaluate liklihood
             likelihood_now = stats.norm.pdf(uk, mean_now, np.sqrt(tau_now))
             # evaluate prior
@@ -204,6 +205,6 @@ def predict_sst(age, uk, pstd):
     output['sst'] = mh_s[:, pers5]
 
     # take a subsample of MH to work with for ks.   
-    mh_subsample = mh_s[:, 1::50]
+    mh_subsample = mh_c[:, 0::50]
     output['ens'] = mh_subsample
     return output
