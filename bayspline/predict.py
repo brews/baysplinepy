@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.stats as stats
 import scipy.interpolate as interpolate
+from tqdm import tqdm
 
 from bayspline.posterior import draws
 from bayspline.utils import chainconvergence, augknt, extrapolate_spline
@@ -43,7 +44,7 @@ def predict_uk(age, sst):
     return output
 
 
-def predict_sst(age, uk, pstd):
+def predict_sst(age, uk, pstd, progressbar=True):
     """Predict SST value given UK'37
 
     Parameters
@@ -56,6 +57,10 @@ def predict_sst(age, uk, pstd):
         Prior standard deviation. Recommended values are 7.5 - 10 for most
         UK'37 data. Lower values are usually fine for UK'37 data with a
         smaller range.
+    progressbar : bool, optional
+        Whether or not to display a progress bar on the command line. The bar
+        shows how many MCMC iterations have been completed.
+
 
     Returns
     -------
@@ -128,8 +133,12 @@ def predict_sst(age, uk, pstd):
 
     output['jump_dist'] = jump_dist  # Should be 3.5 in test case.
 
+    indices = range(n_posterior)
+    if progressbar:
+        indices = tqdm(indices, total=n_posterior)
+
     # MH loop
-    for jj in range(n_posterior):
+    for jj in indices:
 
         accepts = np.empty((n_uk, n_iter))
         accepts[:] = np.nan
