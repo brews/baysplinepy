@@ -1,6 +1,5 @@
 import numpy as np
 import scipy.stats as stats
-import scipy.interpolate as interpolate
 from tqdm import tqdm
 
 from bayspline.posterior import draws
