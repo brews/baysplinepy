@@ -30,6 +30,12 @@ def test_predict_sst():
     np.testing.assert_allclose(goal_sst, victim['sst'], atol=1)
 
 
+def test_normpdf():
+    victim = bsl.predict.normpdf(np.array([1.5, 2, 3]), 3, 2)
+    goal = np.array([0.15056872, 0.17603266, 0.19947114])
+    np.testing.assert_allclose(victim, goal, atol=1e-4)
+
+
 @pytest.mark.skip(reason='Need a goal for test')
 def test_predict_sst_real():
     """Test against real data we have as an example

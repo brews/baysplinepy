@@ -1,5 +1,4 @@
 import numpy as np
-import scipy.stats as stats
 from tqdm import tqdm
 
 from bayspline.posterior import draws
@@ -47,6 +46,16 @@ def predict_uk(age, sst):
 
     output['uk'] = ynew
     return output
+
+
+def normpdf(x, mu, sigma):
+    """Get PDF for normal distribution at x
+
+    This is faster than scipy.stats.norm.pdf().
+    """
+    u = (x - mu) / np.abs(sigma)
+    y = (1 / (np.sqrt(2 * np.pi) * np.abs(sigma))) * np.exp(-u * u / 2)
+    return y
 
 
 def predict_sst(age, uk, pstd, progressbar=True):
@@ -164,10 +173,10 @@ def predict_sst(age, uk, pstd, progressbar=True):
         mean_now = bs(sample_now)
 
         # Evaluate likelihood
-        likelihood_now = stats.norm.pdf(uk, mean_now, np.sqrt(tau_now))
+        likelihood_now = normpdf(uk, mean_now, np.sqrt(tau_now))
 
         # Evaluate prior
-        prior_now = stats.norm.pdf(sample_now, prior_mean, np.sqrt(prior_var))
+        prior_now = normpdf(sample_now, prior_mean, np.sqrt(prior_var))
 
         # multiply to get initial proposal S0
         initial_proposal = likelihood_now * prior_now
@@ -178,9 +187,10 @@ def predict_sst(age, uk, pstd, progressbar=True):
             # evaluate mean value at current sst
             mean_now = bs(proposal)
             # evaluate liklihood
-            likelihood_now = stats.norm.pdf(uk, mean_now, np.sqrt(tau_now))
+            likelihood_now = normpdf(uk, mean_now, np.sqrt(tau_now))
+
             # evaluate prior
-            prior_now = stats.norm.pdf(proposal, prior_mean, np.sqrt(prior_var))
+            prior_now = normpdf(proposal, prior_mean, np.sqrt(prior_var))
             # multiply to get proposal update_proposal
             update_proposal = likelihood_now * prior_now
 
