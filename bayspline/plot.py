@@ -3,7 +3,7 @@ import scipy.stats as stats
 import matplotlib.pyplot as plt
 
 
-def plot_outputs_priorpost(d, ax=None):
+def densityplot(d, ax=None):
     if ax is None:
         ax = plt.gca()
 
@@ -19,7 +19,7 @@ def plot_outputs_priorpost(d, ax=None):
     return ax
 
 
-def plot_outputs_timeseries(d, ax=None):
+def predictplot(d, ax=None):
     if ax is None:
         ax = plt.gca()
 
