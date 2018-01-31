@@ -1,5 +1,5 @@
-baysparpy
-=========
+baysplinepy
+===========
 
 .. image:: https://travis-ci.org/brews/baysplinepy.svg?branch=master
     :target: https://travis-ci.org/brews/baysplinepy
