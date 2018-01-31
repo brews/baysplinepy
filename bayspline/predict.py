@@ -1,7 +1,7 @@
 import numpy as np
 from tqdm import tqdm
 
-from bayspline.posterior import draws
+from bayspline.modelparams import draws
 from bayspline.utils import chainconvergence, augknt, extrapolate_spline
 
 

@@ -72,7 +72,7 @@ setup(
     extras_require={
         'test': ['pytest']
         },
-    package_data={'bayspline': ['posterior/*.mat',
+    package_data={'bayspline': ['modelparams/*.mat',
                                 'example_data/*.csv']},
     
 )
