@@ -1,1 +1,1 @@
-from bayspline.modelparams.core import draws
+from bayspline.modelparams.core import get_draws

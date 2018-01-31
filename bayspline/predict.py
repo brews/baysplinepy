@@ -1,7 +1,7 @@
 import numpy as np
 from tqdm import tqdm
 
-from bayspline.modelparams import draws
+from bayspline.modelparams import get_draws
 from bayspline.utils import chainconvergence, augknt, extrapolate_spline
 
 
@@ -24,6 +24,7 @@ def predict_uk(age, sst):
     """
     output = dict()
 
+    draws = get_draws()
     b_draws_final = draws['b_draws_final']
     tau2_draws_final = draws['tau2_draws_final']
     knots = draws['knots'].ravel()
@@ -101,6 +102,7 @@ def predict_sst(age, uk, pstd, progressbar=True):
     # TODO: Add limit to uk range -- I can make strange numbers with large uk vals (e.g. 28)
     output = dict()
     # draws = loadmat('bayes_posterior.mat')
+    draws = get_draws()
     b_draws_final = draws['b_draws_final'][::3, :]
     tau2_draws_final = draws['tau2_draws_final'][::3, :]
     knots = draws['knots'].ravel()
