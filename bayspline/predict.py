@@ -20,24 +20,10 @@ class Prediction:
         Prior mean used for the prediction.
     prior_std : float or None, optional
         Prior sample standard deviation used for the prediction.
-    jump_distance : float
-        Standard deviation of the jump distribution.
-    acceptance : float
-        Acceptance rate of Metropolis-Hastings MCMC.
-    rhat : float
-        Median rhat for MCMC convergence.
-
-    References
-    ----------
-    .. [1] Gelman, Andrew, ed. Bayesian Data Analysis. 2nd ed. Texts in
-        Statistical Science. Boca Raton, Fla: Chapman & Hall/CRC, 2004.
     """
     ensemble = attr.ib(validator=av.optional(av.instance_of(np.ndarray)))
     prior_mean = attr.ib(default=None)
     prior_std = attr.ib(default=None)
-    jump_distance = attr.ib(default=None)
-    acceptance = attr.ib(default=None)
-    rhat = attr.ib(default=None)
 
     def percentile(self, q=None, interpolation='nearest'):
         """Compute the qth ranked percentile from ensemble members
@@ -61,6 +47,52 @@ class Prediction:
         perc = np.percentile(self.ensemble, q=q, axis=1,
                              interpolation=interpolation)
         return perc.T
+
+
+@attr.s()
+class UKPrediction(Prediction):
+    """MCMC prediction of a UK37 record
+
+    Parameters
+    ----------
+    ensemble : ndarray
+        Ensemble of predictions. A 2d array (nxm) for n predictands and m
+        ensemble members.
+    prior_mean : float or None, optional
+        Prior mean used for the prediction.
+    prior_std : float or None, optional
+        Prior sample standard deviation used for the prediction.
+    """
+
+
+@attr.s()
+class SSTPrediction(Prediction):
+    """MCMC prediction of a SST record
+
+    Parameters
+    ----------
+    ensemble : ndarray
+        Ensemble of predictions. A 2d array (nxm) for n predictands and m
+        ensemble members.
+    prior_mean : float or None, optional
+        Prior mean used for the prediction.
+    prior_std : float or None, optional
+        Prior sample standard deviation used for the prediction.
+    jump_distance : float
+        Standard deviation of the jump distribution.
+    acceptance : float
+        Acceptance rate of Metropolis-Hastings MCMC.
+    rhat : float
+        Median rhat for MCMC convergence.
+
+    References
+    ----------
+    .. [1] Gelman, Andrew, ed. Bayesian Data Analysis. 2nd ed. Texts in
+        Statistical Science. Boca Raton, Fla: Chapman & Hall/CRC, 2004.
+    """
+    jump_distance = attr.ib(default=None)
+    acceptance = attr.ib(default=None)
+    rhat = attr.ib(default=None)
 
 
 def predict_uk(sst):
@@ -97,7 +129,7 @@ def predict_uk(sst):
 
         ynew[:, i] = np.random.normal(mean_now, np.sqrt(tau2_now))
 
-    output = Prediction(ensemble=ynew)
+    output = UKPrediction(ensemble=ynew)
     return output
 
 
@@ -261,10 +293,10 @@ def predict_sst(uk, pstd, progressbar=True):
     # reshape
     mh_c = mh_samples.reshape([n_uk, n_posterior * (n_iter-burnin)], order='F')
 
-    output = Prediction(ensemble=mh_c,
-                        acceptance=np.nansum(accepts_t) / (n_uk * n_posterior * (n_iter - burnin)),
-                        rhat=np.median(rhats, axis=0),
-                        jump_distance=jump_dist,
-                        prior_mean=pmean_out,
-                        prior_std=pstd_out)
+    output = SSTPrediction(ensemble=mh_c,
+                           acceptance=np.nansum(accepts_t) / (n_uk * n_posterior * (n_iter - burnin)),
+                           rhat=np.median(rhats, axis=0),
+                           jump_distance=jump_dist,
+                           prior_mean=pmean_out,
+                           prior_std=pstd_out)
     return output
