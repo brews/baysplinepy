@@ -41,7 +41,7 @@ def test_predict_sst_real():
     """
     np.random.seed(123)
 
-    d = np.genfromtxt(bsl.get_example_data('stienke2008-md01-2390.csv'),
+    d = np.genfromtxt(bsl.get_example_data('tierney2016-p178-15p.csv'),
                       delimiter=',', names=True)
 
-    prediction = bsl.predict_sst(age=d['age'], uk=d['uk'], pstd=10)
+    prediction = bsl.predict_sst(age=d['age'], uk=d['uk37'], pstd=10)
