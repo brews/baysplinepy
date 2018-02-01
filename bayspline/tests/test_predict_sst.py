@@ -7,7 +7,6 @@ def test_predict_sst():
     np.random.seed(123)
 
     uk = np.array([0.4, 0.5, 0.6])
-    age = np.array([1, 2, 3])
     pstd = 7.5
 
     # Got these goals from original MATLAB code output.
@@ -20,14 +19,14 @@ def test_predict_sst():
                          [10.8206, 11.7538, 13.1597, 14.5701, 15.5144],
                          [13.7086, 14.6448, 16.0522, 17.4940, 18.3874]])
 
-    victim = bsl.predict_sst(age, uk, pstd)
+    victim = bsl.predict_sst(uk=uk, pstd=pstd)
 
-    np.testing.assert_allclose(goal_prior_mean, victim['prior_mean'], atol=1e-4)
-    assert goal_prior_std == victim['prior_std']
-    assert goal_jump_dist == victim['jump_dist']
-    np.testing.assert_allclose(goal_rhat, victim['rhat'], atol=5e-2)
-    np.testing.assert_allclose(goal_accepts, victim['accepts'], atol=0.5)
-    np.testing.assert_allclose(goal_sst, victim['sst'], atol=1)
+    np.testing.assert_allclose(goal_prior_mean, victim.prior_mean, atol=1e-4)
+    assert goal_prior_std == victim.prior_std
+    assert goal_jump_dist == victim.jump_distance
+    np.testing.assert_allclose(goal_rhat, victim.rhat, atol=5e-2)
+    np.testing.assert_allclose(goal_accepts, victim.acceptance, atol=0.5)
+    np.testing.assert_allclose(goal_sst, victim.percentile(q=[5, 16, 50, 84, 95]), atol=1)
 
 
 def test_normpdf():

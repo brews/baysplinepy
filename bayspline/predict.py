@@ -1,3 +1,5 @@
+import attr
+import attr.validators as av
 import numpy as np
 from tqdm import tqdm
 
@@ -5,31 +7,81 @@ from bayspline.modelparams import get_draws
 from bayspline.utils import chainconvergence, augknt, extrapolate_spline
 
 
-def predict_uk(age, sst):
+@attr.s()
+class Prediction:
+    """MCMC prediction
+
+    Parameters
+    ----------
+    ensemble : ndarray
+        Ensemble of predictions. A 2d array (nxm) for n predictands and m
+        ensemble members.
+    prior_mean : float or None, optional
+        Prior mean used for the prediction.
+    prior_std : float or None, optional
+        Prior sample standard deviation used for the prediction.
+    jump_distance : float
+        Standard deviation of the jump distribution.
+    acceptance : float
+        Acceptance rate of Metropolis-Hastings MCMC.
+    rhat : float
+        Median rhat for MCMC convergence.
+
+    References
+    ----------
+    .. [1] Gelman, Andrew, ed. Bayesian Data Analysis. 2nd ed. Texts in
+        Statistical Science. Boca Raton, Fla: Chapman & Hall/CRC, 2004.
+    """
+    ensemble = attr.ib(validator=av.optional(av.instance_of(np.ndarray)))
+    prior_mean = attr.ib(default=None)
+    prior_std = attr.ib(default=None)
+    jump_distance = attr.ib(default=None)
+    acceptance = attr.ib(default=None)
+    rhat = attr.ib(default=None)
+
+    def percentile(self, q=None, interpolation='nearest'):
+        """Compute the qth ranked percentile from ensemble members
+
+        Parameters
+        ----------
+        q : float ,sequence of floats, or None, optional
+            Percentiles (i.e. [0, 100]) to compute. Default is 5%, 50%, 95%.
+        interpolation : str, optional
+            Passed to numpy.percentile. Default is 'nearest'.
+        Returns
+        -------
+        perc : ndarray
+            A 2d (nxm) array of floats where n is the number of predictands in
+            the ensemble and m is the number of percentiles ('len(q)').
+        """
+        if q is None:
+            q = [5, 50, 95]
+        q = np.array(q, dtype=np.float64, copy=True)
+
+        perc = np.percentile(self.ensemble, q=q, axis=1,
+                             interpolation=interpolation)
+        return perc.T
+
+
+def predict_uk(sst):
     """Predict a UK'37 value given SST
 
     Parameters
     ----------
-    age : 1d array_like
-        Indicates the age of each element in `uk`. Array length is N.
     sst : 1d array_like
         SST values. Array length is N.
 
     Returns
     -------
-    output : dict
-
-        uk : ndarry
-            1500 x N array of inferred ensemble UK'37 values
+    output : Prediction
+        Inferred ensemble UK'37 values.
     """
-    output = dict()
 
     draws = get_draws()
     b_draws_final = draws['b_draws_final']
     tau2_draws_final = draws['tau2_draws_final']
     knots = draws['knots'].ravel()
 
-    output['age'] = np.array(age)
     xnew = np.array(sst)
 
     degree = 2
@@ -45,7 +97,7 @@ def predict_uk(age, sst):
 
         ynew[:, i] = np.random.normal(mean_now, np.sqrt(tau2_now))
 
-    output['uk'] = ynew
+    output = Prediction(ensemble=ynew)
     return output
 
 
@@ -59,13 +111,11 @@ def normpdf(x, mu, sigma):
     return y
 
 
-def predict_sst(age, uk, pstd, progressbar=True):
+def predict_sst(uk, pstd, progressbar=True):
     """Predict SST value given UK'37
 
     Parameters
     ----------
-    age : 1d array_like
-        Indicates the age of each element in `uk`. Array length is N.
     uk : 1d array_like
         UK'37 values. Array length is N.
     pstd : float
@@ -79,7 +129,7 @@ def predict_sst(age, uk, pstd, progressbar=True):
 
     Returns
     -------
-    output : dict
+    output : Prediction
         prior_mean : float
             Prior mean value, taken from the mean of the UK'37 data converted
             to SST with the Prahl equation.
@@ -88,10 +138,6 @@ def predict_sst(age, uk, pstd, progressbar=True):
         jump_dist : float
             Standard deviation of the jump distribution. Values are chosen
             to achieve an acceptance rate of ca. 0.44 [1]_.
-        sst : ndarry
-            5 x N array of inferred SSTs, includes 5% level (lower 2sigma),
-            16% level (lower 1sigma), 50% level (median values),
-            84% level (upper 1sigma), and 95% level (upper 2 sigma).
 
     References
     ----------
@@ -100,14 +146,11 @@ def predict_sst(age, uk, pstd, progressbar=True):
     """
 
     # TODO: Add limit to uk range -- I can make strange numbers with large uk vals (e.g. 28)
-    output = dict()
-    # draws = loadmat('bayes_posterior.mat')
     draws = get_draws()
     b_draws_final = draws['b_draws_final'][::3, :]
     tau2_draws_final = draws['tau2_draws_final'][::3, :]
     knots = draws['knots'].ravel()
 
-    output['age'] = np.array(age)
     uk = np.array(uk)
 
     n_uk = len(uk)
@@ -121,12 +164,12 @@ def predict_sst(age, uk, pstd, progressbar=True):
     prior_mean = np.median((uk - 0.039) / 0.034)
 
     # Save priors to output
-    output['prior_mean'] = prior_mean
-    output['prior_std'] = pstd
+    pmean_out = prior_mean
+    pstd_out = pstd
 
     # Vectorize priors
-    prior_mean = output['prior_mean'] * np.ones(n_uk)
-    prior_var = output['prior_std'] ** 2 * np.ones(n_uk)
+    prior_mean = pmean_out * np.ones(n_uk)
+    prior_var = pstd_out ** 2 * np.ones(n_uk)
 
     # Set an initial SST value
     initial_sst = prior_mean
@@ -140,14 +183,12 @@ def predict_sst(age, uk, pstd, progressbar=True):
     degree = 2  # order is 3
     kn = augknt(knots, degree)
 
-    if output['prior_mean'] < 20:
+    if pmean_out < 20:
         jump_dist = 3.5
-    elif 20 <= output['prior_mean'] <= 23.7:
+    elif 20 <= pmean_out <= 23.7:
         jump_dist = 3.7
     else:
-        jump_dist = output['prior_mean'] * 0.8092 - 15.1405
-
-    output['jump_dist'] = jump_dist  # Should be 3.5 in test case.
+        jump_dist = pmean_out * 0.8092 - 15.1405
 
     indices = range(n_posterior)
     if progressbar:
@@ -216,21 +257,14 @@ def predict_sst(age, uk, pstd, progressbar=True):
     rhats = np.empty((mh_samples.shape[0], 1))
     for i in range(mh_samples.shape[0]):
         rhats[i], neff = chainconvergence(mh_samples[i, ...].squeeze(), n_posterior)
-    output['rhat'] = np.median(rhats, axis=0)
 
     # reshape
     mh_c = mh_samples.reshape([n_uk, n_posterior * (n_iter-burnin)], order='F')
 
-    # Calculate acceptance
-    output['accepts'] = np.nansum(accepts_t) / (n_uk * n_posterior * (n_iter - burnin))
-
-    # Sort and assign to output
-    mh_s = mh_c.copy()
-    mh_s.sort(axis=1)
-    pers5 = np.round(np.array([0.05, 0.16, 0.5, 0.84, 0.95]) * mh_c.shape[1]).astype('int')
-    output['sst'] = mh_s[:, pers5]
-
-    # take a subsample of MH to work with for ks.   
-    mh_subsample = mh_c[:, 0::50]
-    output['ens'] = mh_subsample
+    output = Prediction(ensemble=mh_c,
+                        acceptance=np.nansum(accepts_t) / (n_uk * n_posterior * (n_iter - burnin)),
+                        rhat=np.median(rhats, axis=0),
+                        jump_distance=jump_dist,
+                        prior_mean=pmean_out,
+                        prior_std=pstd_out)
     return output
