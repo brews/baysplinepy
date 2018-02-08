@@ -28,16 +28,16 @@ has three columns giving core depth (cm), sediment age (calendar years BP), and 
 
 We can predict sea-surface temperatures (SST) from UK'37 with ``bsl.predict_sst()``::
 
-	    prediction = bsl.predict_sst(d['uk37'], prior_std=10)
+    prediction = bsl.predict_sst(d['uk37'], pstd=10)
 
 To see actual numbers from the prediction, directly parse ``prediction.ensemble`` or use ``prediction.percentile()`` to get the 5%, 50% and 95% percentiles.
 
-You can also plot your predicition with ``bsl.predictplot()`` or ``bsl.densityplot()``.
+You can also plot your prediction with ``bsl.predictplot()`` or ``bsl.densityplot()``.
 
 Alternatively, we can make inferences about UK'37 from SST with ``bsl.predict_uk()``::
 
-	sst = np.arange(1, 35, 5)
-	prediction = bsl.predict_uk(sst)
+    sst = np.arange(1, 25)
+    prediction = bsl.predict_uk(sst)
 
 
 Installation
@@ -45,7 +45,7 @@ Installation
 
 Install **baysplinepy** in ``conda`` with::
 
-	$ conda install baysplinepy -c sbmalev
+    $ conda install baysplinepy -c sbmalev
 
 To install with ``pip``, run::
 
