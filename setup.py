@@ -49,7 +49,7 @@ setup(
     ],
 
     # What does your project relate to?
-    keywords='marine paleoclimate uk37',
+    keywords='marine paleoclimate uk37 calibration',
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
