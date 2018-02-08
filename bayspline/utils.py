@@ -200,7 +200,7 @@ def chainconvergence(chains, m):
 
 
 def get_example_data(filename):
-    """Get a BytesIO object for a bayspar example file.
+    """Get a BytesIO object for a bayspline example file.
 
     Parameters
     ----------

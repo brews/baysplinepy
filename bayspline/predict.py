@@ -105,7 +105,7 @@ def predict_uk(sst):
 
     Returns
     -------
-    output : Prediction
+    output : UKPrediction
         Inferred ensemble UK'37 values.
     """
 
@@ -161,7 +161,7 @@ def predict_sst(uk, pstd, progressbar=True):
 
     Returns
     -------
-    output : Prediction
+    output : SSTPrediction
         prior_mean : float
             Prior mean value, taken from the mean of the UK'37 data converted
             to SST with the Prahl equation.
