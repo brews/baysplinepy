@@ -29,7 +29,7 @@ def densityplot(prediction, x=None, xlabel=None, ax=None):
         x = np.arange(0, 40.1, 0.1)
 
     if prediction.prior_mean is not None and prediction.prior_std is not None:
-        prior = stats.norm.pdf(x, prediction.prior_mean, prediction.prior_std)
+        prior = stats.norm.pdf(x, np.mean(prediction.prior_mean), prediction.prior_std)
         ax.plot(x, prior, color='C1', linestyle='dashed', label='Prior')
 
     kde = stats.gaussian_kde(prediction.ensemble.flat)
@@ -79,7 +79,7 @@ def predictplot(prediction, ylabel=None, x=None, xlabel=None, ax=None):
     ax.plot(x, perc[:, 1], marker='.', color='C0')
 
     if prediction.prior_mean is not None:
-        ax.axhline(prediction.prior_mean, label='Prior mean',
+        ax.axhline(np.mean(prediction.prior_mean), label='Prior mean',
                    linestyle='dashed', color='C1')
 
     if ylabel is not None:

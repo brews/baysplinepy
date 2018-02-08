@@ -10,7 +10,7 @@ def test_predict_sst():
     pstd = 7.5
 
     # Got these goals from original MATLAB code output.
-    goal_prior_mean = 13.5588
+    goal_prior_mean = np.array([10.6176, 13.5588, 16.5000])
     goal_prior_std = 7.5
     goal_jump_dist = 3.5
     goal_rhat = 1.0074

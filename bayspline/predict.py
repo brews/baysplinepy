@@ -193,7 +193,7 @@ def predict_sst(uk, pstd, progressbar=True):
     burnin = 250
 
     # Set priors. Use prahl conversion to target mean and std
-    prior_mean = np.median((uk - 0.039) / 0.034)
+    prior_mean = (uk - 0.039) / 0.034
 
     # Save priors to output
     pmean_out = prior_mean
@@ -215,12 +215,13 @@ def predict_sst(uk, pstd, progressbar=True):
     degree = 2  # order is 3
     kn = augknt(knots, degree)
 
-    if pmean_out < 20:
+    prior_mean_median = np.median(prior_mean)
+    if prior_mean_median < 20:
         jump_dist = 3.5
-    elif 20 <= pmean_out <= 23.7:
+    elif 20 <= prior_mean_median <= 23.7:
         jump_dist = 3.7
     else:
-        jump_dist = pmean_out * 0.8092 - 15.1405
+        jump_dist = prior_mean_median * 0.8092 - 15.1405
 
     indices = range(n_posterior)
     if progressbar:
