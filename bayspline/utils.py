@@ -98,8 +98,8 @@ def add_ppolyknot(ppoly, knots):
         b[pieces] = tmp
 
     addknots = knots[np.concatenate([index0, index1[index], index2])]
-    x = addknots - b[[jl]]
-    a = c[[jl]]
+    x = addknots - b[(jl)]
+    a = c[(jl)]
     for i in range(k - 1, 0, -1):
         for j in range(1, i + 1):
             a[:, j] = x * a[:, j - 1] + a[:, j]

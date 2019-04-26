@@ -13,6 +13,8 @@ Enhancements
 Bug fixes
 ~~~~~~~~~
 
+- Closed Issue #9: "Numpy FutureWarning about non-tuple sequence from multidimensional index"
+
 
 .. _whats-new.0.0.1:
 
