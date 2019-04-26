@@ -143,14 +143,14 @@ def normpdf(x, mu, sigma):
     return y
 
 
-def predict_sst(uk, pstd, progressbar=True):
+def predict_sst(uk, prior_std, progressbar=True):
     """Predict SST value given UK'37
 
     Parameters
     ----------
     uk : 1d array_like
         UK'37 values. Array length is N.
-    pstd : float
+    prior_std : float
         Prior standard deviation. Recommended values are 7.5 - 10 for most
         UK'37 data. Lower values are usually fine for UK'37 data with a
         smaller range.
@@ -197,7 +197,7 @@ def predict_sst(uk, pstd, progressbar=True):
 
     # Save priors to output
     pmean_out = prior_mean
-    pstd_out = pstd
+    pstd_out = prior_std
 
     # Vectorize priors
     prior_mean = pmean_out * np.ones(n_uk)

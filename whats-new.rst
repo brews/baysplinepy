@@ -9,6 +9,7 @@ v0.0.2
 Enhancements
 ~~~~~~~~~~~~
 
+- Changed the signature of ``predict_sst()`` argument ``pstd`` to ``prior_std`` to make it consistent with other BAY* packages (Issue #3).
 - Several minor internal changes to package metadata (Issue #8).
 
 

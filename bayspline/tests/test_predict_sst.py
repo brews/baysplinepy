@@ -19,7 +19,7 @@ def test_predict_sst():
                          [10.8206, 11.7538, 13.1597, 14.5701, 15.5144],
                          [13.7086, 14.6448, 16.0522, 17.4940, 18.3874]])
 
-    victim = bsl.predict_sst(uk=uk, pstd=pstd)
+    victim = bsl.predict_sst(uk=uk, prior_std=pstd)
 
     np.testing.assert_allclose(goal_prior_mean, victim.prior_mean, atol=1e-4)
     assert goal_prior_std == victim.prior_std
@@ -44,4 +44,4 @@ def test_predict_sst_real():
     d = np.genfromtxt(bsl.get_example_data('tierney2016-p178-15p.csv'),
                       delimiter=',', names=True)
 
-    prediction = bsl.predict_sst(age=d['age'], uk=d['uk37'], pstd=10)
+    prediction = bsl.predict_sst(age=d['age'], uk=d['uk37'], prior_std=10)
