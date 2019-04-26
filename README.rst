@@ -28,7 +28,7 @@ has three columns giving core depth (cm), sediment age (calendar years BP), and 
 
 We can predict sea-surface temperatures (SST) from UK'37 with ``bsl.predict_sst()``::
 
-    prediction = bsl.predict_sst(d['uk37'], pstd=10)
+    prediction = bsl.predict_sst(d['uk37'], prior_std=10)
 
 To see actual numbers from the prediction, directly parse ``prediction.ensemble`` or use ``prediction.percentile()`` to get the 5%, 50% and 95% percentiles.
 
