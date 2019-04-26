@@ -9,6 +9,8 @@ v0.0.2
 Enhancements
 ~~~~~~~~~~~~
 
+- Several minor internal changes to package metadata (Issue #8).
+
 
 Bug fixes
 ~~~~~~~~~

@@ -6,10 +6,12 @@ https://packaging.python.org/en/latest/distributing.html
 
 # Always prefer setuptools over distutils
 from setuptools import setup, find_packages
-# To use a consistent encoding
-from os import path
 
-here = path.abspath(path.dirname(__file__))
+
+def readme():
+    with open('README.rst') as f:
+        return f.read()
+
 
 setup(
     name='baysplinepy',
@@ -20,6 +22,7 @@ setup(
     version='0.0.1',
 
     description='A Python implementation of BAYSPLINE',
+    long_description=readme(),
 
     # The project's main homepage.
     url='https://github.com/brews/baysplinepy',
