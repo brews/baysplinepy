@@ -158,7 +158,6 @@ def predict_sst(uk, prior_std, progressbar=True):
         Whether or not to display a progress bar on the command line. The bar
         shows how many MCMC iterations have been completed.
 
-
     Returns
     -------
     output : SSTPrediction
